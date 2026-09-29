@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>Digital Twin: Motorcycle Rear Suspension Dynamics Lab</title>
+    <meta name="title" content="Digital Twin: Motorcycle Rear Suspension Dynamics Lab">
+    <meta name="description" content="Laboratorium virtual dan simulasi interaktif 3D dinamika suspensi belakang sepeda motor berbasis Quarter-Car Model, Base Excitation, dan Solver RK4.">
+    <meta name="keywords" content="digital twin, suspensi sepeda motor, quarter car model, base excitation, runge-kutta 4, rk4, mekanika teknik, simulasi 3d, unimal, jtm unimal, teknik mesin unimal">
+    <meta name="author" content="ShakiDC - JTM UNIMAL">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#09090b">
+
+    <!-- Open Graph / Facebook / WhatsApp / LinkedIn / Telegram Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://digitaltwin-suspension.lab/">
+    <meta property="og:title" content="Digital Twin: Motorcycle Rear Suspension Dynamics">
+    <meta property="og:description" content="Simulasi interaktif 3D dan laboratorium virtual untuk dinamika sistem suspensi sepeda motor dengan kalkulasi RK4 dan analisis matematika ilmiah.">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:site_name" content="Digital Twin Suspension Lab">
+    <meta property="og:locale" content="id_ID">
+
+    <!-- Twitter / X Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://digitaltwin-suspension.lab/">
+    <meta name="twitter:title" content="Digital Twin: Motorcycle Rear Suspension Dynamics">
+    <meta name="twitter:description" content="Simulasi interaktif 3D dan laboratorium virtual untuk dinamika sistem suspensi sepeda motor berbasis RK4 Solver.">
+    <meta name="twitter:image" content="logo.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js (3D Engine) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- GLTFLoader untuk memuat file .glb -->
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <!-- Chart.js (Graphs) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- KaTeX (Math Equations) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="initKaTeX()"></script>
+    
+    <link rel="icon" type="image/png" href="logo.png">
+    
+    <style>
+        :root {
+            --neon-blue: #38bdf8;
+            --neon-red: #fb7185;
+            --dark-bg: #09090b;
+            --panel-bg: rgba(24, 24, 27, 0.7);
+        }
+        
+        body {
+            background-color: var(--dark-bg);
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, transparent 70%);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 14px 0;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: #27272a;
+            border-radius: 3px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: var(--neon-blue);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+            box-shadow: 0 0 10px var(--neon-blue);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+            outline: none;
+        }
+
+        /* Styling Edukasi Tab */
+        .edu-content h2 { 
+            color: #38bdf8; 
+            font-weight: 800; 
+            font-size: 1.65rem; 
+            margin-top: 1.5rem; 
+            margin-bottom: 1rem; 
+            letter-spacing: 0.025em; 
+        }
+        .edu-content h3 { 
+            color: #34d399; 
+            font-weight: 700; 
+            font-size: 1.3rem; 
+            margin-top: 1.75rem; 
+            margin-bottom: 0.85rem; 
+        }
+        .edu-content h4 { 
+            color: #f43f5e; 
+            font-weight: 700; 
+            font-size: 1.1rem; 
+            margin-top: 1rem; 
+            margin-bottom: 0.5rem; 
+        }
+        .edu-content p { 
+            color: #e4e4e7; 
+            line-height: 1.85; 
+            margin-bottom: 1.25rem; 
+            font-size: 1.05rem; 
+        }
+        .edu-content ul, .edu-content ol { 
+            margin-left: 1.75rem; 
+            color: #e4e4e7; 
+            line-height: 1.85; 
+            font-size: 1.05rem; 
+            margin-bottom: 1.25rem; 
+        }
+        .edu-content ul { list-style-type: disc; }
+        .edu-content ol { list-style-type: decimal; }
+        .edu-content li { margin-bottom: 0.5rem; }
+        
+        .katex-display { 
+            margin: 1.5rem 0 !important; 
+            overflow-x: auto; 
+            overflow-y: hidden; 
+            padding: 0.75rem 0; 
+            background: rgba(0,0,0,0.25);
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="p-3 md:p-6 flex flex-col gap-6">
+
+    <!-- HEADER: Logo, Title, Active Status -->
+    <header class="flex flex-col md:flex-row justify-between items-center gap-4 glass-panel p-4 md:px-6 rounded-2xl border-t-2 border-t-sky-500/30">
+        <div class="flex items-center gap-4">
+            <!-- Logo Placeholder -->
+            <div class="relative w-14 h-14 shrink-0 flex items-center justify-center bg-zinc-900/80 rounded-2xl border border-sky-500/30 overflow-hidden shadow-inner">
+                <img src="logo.png" alt="Logo" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzhiZGY4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01eiIvPjxwYXRoIGQ9Ik0yIDEybDEwIDUgMTAtNSIvPjxwYXRoIGQ9Ik0yIDE3bDEwIDUgMTAtNSIvPjwvc3ZnPg=='">
+            </div>
+            
+            <div>
+                <h1 class="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600 uppercase tracking-widest drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">
+                    Digital Twin: Suspension Dynamics
+                </h1>
+                <p class="text-zinc-400 text-xs md:text-sm mt-1 uppercase tracking-wider font-semibold">Virtual Lab • Base Excitation • RK4 Solver</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3 bg-emerald-950/40 px-4 py-2 rounded-full border border-emerald-800/50 text-emerald-400 text-xs md:text-sm font-bold tracking-widest">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            REAL-TIME SYS ACTIVE
+        </div>
+    </header>
+
+    <!-- TAB NAVIGATION -->
+    <div class="flex justify-center my-1 gap-3 md:gap-5">
+        <button id="btn-tab-sim" class="px-6 md:px-8 py-3 rounded-xl font-extrabold text-sm md:text-base bg-sky-600 text-white shadow-[0_0_15px_rgba(56,189,248,0.4)] transition-all flex items-center gap-2">
+        Simulator Virtual
+        </button>
+        <button id="btn-tab-edu" class="px-6 md:px-8 py-3 rounded-xl font-extrabold text-sm md:text-base bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-all border border-zinc-700/60 flex items-center gap-2">
+        Materi Edukasi
+        </button>
+    </div>
+
+    <!-- TAB 1: SIMULATOR CONTENT -->
+    <div id="tab-simulator" class="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full flex-1">
+        
+        <!-- Sidebar Controls -->
+        <div class="lg:col-span-3 flex flex-col gap-5 h-full">
+            
+            <!-- Disturbances Panel -->
+            <div class="glass-panel p-5 rounded-2xl">
+                <h2 class="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 border-b border-zinc-800 pb-2">Input Gangguan Jalan $y(t)$</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btn-bump" class="bg-gradient-to-br from-amber-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-white py-3.5 rounded-xl font-bold shadow-[0_0_20px_rgba(245,158,11,0.2)] active:scale-95 transition-all flex flex-col items-center justify-center gap-1 border border-amber-400/30">
+                        <span class="text-2xl">⛰️</span>
+                        <span class="text-xs uppercase tracking-wider font-extrabold">Polisi Tidur</span>
+                    </button>
+                    <button id="btn-pothole" class="bg-gradient-to-br from-zinc-700 to-zinc-900 hover:from-zinc-600 hover:to-zinc-800 text-white py-3.5 rounded-xl font-bold shadow-[0_0_20px_rgba(63,63,70,0.4)] active:scale-95 transition-all flex flex-col items-center justify-center gap-1 border border-zinc-500/30">
+                        <span class="text-2xl">🕳️</span>
+                        <span class="text-xs uppercase tracking-wider font-extrabold">Lubang Jalan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parameters & Dynamic Calculation Panel -->
+            <div class="glass-panel p-5 rounded-2xl flex-1 border-l-2 border-sky-500/50 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xs font-black text-zinc-400 uppercase tracking-widest mb-5 border-b border-zinc-800 pb-2">Parameter Sistem</h2>
+                    
+                    <div class="space-y-5">
+                        <div>
+                            <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
+                                <label class="text-zinc-400">Kecepatan <span class="text-zinc-500 normal-case">(V)</span></label>
+                                <span class="text-sky-400 font-mono"><span id="val-v" class="text-sm font-bold">40</span> km/h</span>
+                            </div>
+                            <input type="range" id="input-v" min="10" max="150" step="5" value="40">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
+                                <label class="text-zinc-400">Massa Sasis <span class="text-zinc-500 normal-case">(m)</span></label>
+                                <span class="text-white font-mono"><span id="val-m" class="text-sm font-bold">150</span> kg</span>
+                            </div>
+                            <input type="range" id="input-m" min="80" max="300" step="10" value="150">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
+                                <label class="text-zinc-400">Kekakuan Pegas <span class="text-zinc-500 normal-case">(k)</span></label>
+                                <span class="text-emerald-400 font-mono"><span id="val-k" class="text-sm font-bold">2000</span> N/m</span>
+                            </div>
+                            <input type="range" id="input-k" min="1000" max="10000" step="100" value="2000">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
+                                <label class="text-zinc-400">Peredaman <span class="text-zinc-500 normal-case">(c)</span></label>
+                                <span class="text-rose-400 font-mono"><span id="val-c" class="text-sm font-bold">2000</span> Ns/m</span>
+                            </div>
+                            <input type="range" id="input-c" min="100" max="10000" step="100" value="2000">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Calculation Results -->
+                <div class="mt-6 border-t border-zinc-800/80 pt-4 flex flex-col gap-2.5">
+                    <h3 class="text-[11px] font-black text-zinc-400 uppercase tracking-wider mb-1">Hasil Kalkulasi Dinamis</h3>
+                    
+                    <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-700/60 shadow-inner flex justify-between items-center">
+                        <span class="text-zinc-400 text-xs font-semibold">Freq Natural ($\omega_n$)</span>
+                        <div class="font-mono"><span id="calc-wn" class="text-sky-400 font-bold text-base">0.00</span> <span class="text-zinc-500 text-xs">rad/s</span></div>
+                    </div>
+                    
+                    <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-700/60 shadow-inner flex justify-between items-center">
+                        <span class="text-zinc-400 text-xs font-semibold">Rasio Redaman ($\zeta$)</span>
+                        <span id="calc-zeta" class="text-rose-400 font-mono font-bold text-base">0.00</span>
+                    </div>
+
+                    <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-700/60 shadow-inner flex justify-between items-center">
+                        <span class="text-zinc-400 text-xs font-semibold">Status Redaman</span>
+                        <span id="calc-status" class="text-emerald-400 font-mono font-bold text-xs uppercase">Underdamped</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center/Right Content -->
+        <div class="lg:col-span-9 flex flex-col gap-5 h-full">
+            
+            <!-- Transient Response Chart -->
+            <div class="glass-panel p-4 rounded-2xl h-[260px] md:h-[300px]">
+                <canvas id="responseChart"></canvas>
+            </div>
+
+            <!-- 3D Visualization -->
+            <div class="glass-panel p-1 rounded-2xl min-h-[400px] flex-1 relative overflow-hidden shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] border border-zinc-800">
+                <!-- Data HUD -->
+                <div class="absolute top-4 left-4 z-10 pointer-events-none flex flex-col gap-2">
+                    <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-700/50 backdrop-blur-md">
+                        <div class="flex items-center gap-3 text-xs md:text-sm text-zinc-300 font-mono">
+                            <div class="w-3.5 h-3.5 bg-sky-500 rounded-sm shadow-[0_0_8px_#38bdf8]"></div> 
+                            Chassis Displacement <span>[ x: <span id="hud-x" class="text-sky-300 font-bold">0.000</span> m ]</span>
+                        </div>
+                    </div>
+                    <div class="bg-zinc-900/80 p-3 rounded-xl border border-zinc-700/50 backdrop-blur-md">
+                        <div class="flex items-center gap-3 text-xs md:text-sm text-zinc-300 font-mono">
+                            <div class="w-3.5 h-3.5 border-2 border-zinc-400 rounded-sm"></div> 
+                            Road Surface Input <span>[ y: <span id="hud-y" class="text-zinc-300 font-bold">0.000</span> m ]</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div id="loading-overlay" class="absolute inset-0 z-20 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-sky-400 text-sm font-bold mt-4 tracking-widest uppercase">Memuat Model 3D (motorcycle.glb)...</p>
+                    <p class="text-xs text-zinc-500 mt-2 font-mono text-center px-4" id="loading-error"></p>
+                </div>
+
+                <div id="canvas-container"></div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- TAB 2: MATERI EDUKASI (Hidden by default) -->
+    <div id="tab-education" class="hidden flex-1 glass-panel p-6 md:p-10 rounded-2xl border-t-2 border-t-emerald-500/50 edu-content">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-10 pb-6 border-b border-zinc-800">
+                <h2 class="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-emerald-400 to-blue-500 uppercase tracking-wider">
+                    Pemodelan & Analisis Dinamika Suspensi Sepeda Motor
+                </h2>
+                <p class="text-zinc-400 text-base md:text-lg mt-2 italic">
+                    Modul Pembelajaran Teoretis: Quarter-Car Model, Base Excitation, Fungsi Alih, dan Respon Transien
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-12 gap-8 items-center mb-10">
+                <div class="md:col-span-7">
+                    <h3>1. Konsep Dasar Quarter-Car Model</h3>
+                    <p>
+                        Dalam rekayasa otomotif, <b>Quarter-Car Model (Model Seperempat Kendaraan)</b> merupakan metode penyederhanaan standar yang digunakan untuk mengkaji karakteristik getaran mekanis dan kenyamanan berkendara (<i>ride comfort</i>). 
+                    </p>
+                    <p>
+                        Model ini mereduksi susunan kendaraan kompleks menjadi satu massa terpusat $m$ yang direpresentasikan oleh massa sasis (termasuk bobot pengendara) yang ditopang oleh elemen pemulih berupa pegas linier dengan kekakuan $k$ serta peredam viskos (<i>viscous damper</i>) dengan koefisien $c$.
+                    </p>
+                    <p>
+                        Sistem ini dikategori sebagai sistem <b>Single Degree of Freedom (SDOF)</b> dengan eksitasi berupa gangguan kontur permukaan jalan $y(t)$ pada landasan/dasar (<i>Base Excitation</i>).
+                    </p>
+                </div>
+                <div class="md:col-span-5 bg-black/40 p-6 rounded-2xl border border-zinc-800 flex flex-col items-center justify-center shadow-inner">
+                    <!-- Diagram Bebas Quarter Car SDOF -->
+                    <svg viewBox="0 0 200 240" class="w-52 h-auto">
+                        <!-- Sasis Massa m -->
+                        <rect x="45" y="20" width="110" height="55" fill="#0284c7" stroke="#38bdf8" stroke-width="2" rx="8"/>
+                        <text x="100" y="52" fill="#ffffff" font-weight="bold" font-size="15" text-anchor="middle">Massa (m)</text>
+                        <text x="168" y="45" fill="#38bdf8" font-size="13" font-weight="bold">x(t)</text>
+                        <path d="M 162 60 L 162 25" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow-edu)"/>
+                        
+                        <!-- Pegas k -->
+                        <path d="M 70 75 L 70 90 L 60 95 L 80 105 L 60 115 L 80 125 L 60 135 L 80 145 L 70 150 L 70 165" fill="none" stroke="#34d399" stroke-width="3"/>
+                        <text x="42" y="125" fill="#34d399" font-weight="bold" font-size="14">k</text>
+
+                        <!-- Peredam c -->
+                        <path d="M 130 75 L 130 110 M 115 110 L 145 110" stroke="#fb7185" stroke-width="3"/>
+                        <rect x="120" y="110" width="20" height="30" fill="none" stroke="#fb7185" stroke-width="3"/>
+                        <path d="M 130 140 L 130 165" stroke="#fb7185" stroke-width="3"/>
+                        <text x="155" y="125" fill="#fb7185" font-weight="bold" font-size="14">c</text>
+
+                        <!-- Landasan Roda y(t) -->
+                        <line x1="30" y1="165" x2="170" y2="165" stroke="#94a3b8" stroke-width="4"/>
+                        <text x="180" y="180" fill="#cbd5e1" font-size="13" font-weight="bold">y(t)</text>
+                        <path d="M 174 195 L 174 165" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrow-edu)"/>
+                        
+                        <!-- Profil Jalan Sinusoidal -->
+                        <path d="M 10 215 Q 100 175 190 215" fill="none" stroke="#64748b" stroke-width="3" stroke-dasharray="4,4"/>
+
+                        <defs>
+                            <marker id="arrow-edu" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+                            </marker>
+                        </defs>
+                    </svg>
+                    <p class="text-xs text-zinc-400 mt-3 font-mono text-center">Gambar 1: Model SDOF Quarter-Car Base Excitation</p>
+                </div>
+            </div>
+
+            <hr class="border-zinc-800 my-8">
+
+            <h3>2. Penurunan Persamaan Gerak (Equation of Motion)</h3>
+            <p>
+                Berdasarkan Hukum II Newton ($\sum F = m \cdot a$), gaya pemulih pegas dan gaya hambat peredam bekerja secara proporsional terhadap gerakan relatif antara sasis $x(t)$ dan kontur permukaan jalan $y(t)$:
+            </p>
+            <ul>
+                <li><b>Gaya Pemulih Pegas ($F_k$):</b> Bekerja berdasarkan deviasi posisi relatif, $F_k = k \cdot (y - x)$</li>
+                <li><b>Gaya Redaman Viskos ($F_c$):</b> Bekerja berdasarkan deviasi kecepatan relatif, $F_c = c \cdot (\dot{y} - \dot{x})$</li>
+            </ul>
+            <p>
+                Maka, formulasi keseimbangan gaya pada massa $m$ adalah:
+            </p>
+            
+            $$ m \ddot{x}(t) = k [y(t) - x(t)] + c [\dot{y}(t) - \dot{x}(t)] $$
+
+            <p>
+                Dengan mengelompokkan variabel keluaran sasis $x(t)$ pada ruas kiri dan variabel gangguan jalan $y(t)$ pada ruas kanan, kita memperoleh Persamaan Diferensial Biasa (ODE) Linier Orde-2 berikut:
+            </p>
+
+            $$ m \ddot{x}(t) + c \dot{x}(t) + k x(t) = c \dot{y}(t) + k y(t) $$
+
+            <hr class="border-zinc-800 my-8">
+
+            <h3>3. Domain Frekuensi & Fungsi Alih Transmisibilitas $T(s)$</h3>
+            <p>
+                Untuk menganalisis karakteristik sistem dalam domain frekuensi (Domain Kompleks $s$), kita menerapkan <b>Transformasi Laplace</b> pada persamaan gerak dengan mengasumsikan kondisi awal nol ($x(0) = 0, \dot{x}(0) = 0$):
+            </p>
+
+            $$ m s^2 X(s) + c s X(s) + k X(s) = c s Y(s) + k Y(s) $$
+
+            $$ X(s) \left( m s^2 + c s + k \right) = Y(s) \left( c s + k \right) $$
+
+            <p>
+                <b>Fungsi Alih Transmisibilitas $T(s)$</b> didefinisikan sebagai rasio antara respon perpindahan sasis $X(s)$ terhadap masukan gangguan jalan $Y(s)$:
+            </p>
+
+            $$ T(s) = \frac{X(s)}{Y(s)} = \frac{c s + k}{m s^2 + c s + k} $$
+
+            <hr class="border-zinc-800 my-8">
+
+            <h3>4. Parameter Dinamis Utama Sistem Suspensi</h3>
+            <p>
+                Persamaan penyebut pada fungsi alih $m s^2 + c s + k = 0$ dinamakan <b>Persamaan Karakteristik</b>. Parameter dasar yang menentukan sifat osilasi sistem adalah:
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6 my-6">
+                <div class="bg-zinc-900/60 p-6 border-t-2 border-t-sky-400 rounded-xl border border-zinc-800">
+                    <h4 class="text-sky-400 font-bold">1. Frekuensi Natural Un-damped ($\omega_n$)</h4>
+                    <p class="text-sm">Frekuensi alami di mana sistem akan berosilasi tanpa adanya peredam ($c = 0$).</p>
+                    $$ \omega_n = \sqrt{\frac{k}{m}} \quad \text{[rad/s]} $$
+                </div>
+                <div class="bg-zinc-900/60 p-6 border-t-2 border-t-rose-400 rounded-xl border border-zinc-800">
+                    <h4 class="text-rose-400 font-bold">2. Rasio Redaman ($\zeta$)</h4>
+                    <p class="text-sm">Ukuran kemampuan peredam relatif terhadap Redaman Kritis ($c_c = 2\sqrt{k \cdot m}$).</p>
+                    $$ \zeta = \frac{c}{c_c} = \frac{c}{2\sqrt{k \cdot m}} $$
+                </div>
+            </div>
+
+            <h4>Kategori Kondisi Redaman berdasarkan Nilai $\zeta$:</h4>
+            <ol>
+                <li><b>Underdamped ($\zeta \lt 1$):</b> Sistem mengalami osilasi sebelum mencapai kondisi setimbang. Kebanyakan suspensi kendaraan dirancang pada kisaran $\zeta \approx 0.2 - 0.4$ untuk kenyamanan.</li>
+                <li><b>Critically Damped ($\zeta = 1$):</b> Sistem kembali ke posisi setimbang secepat mungkin tanpa osilasi.</li>
+                <li><b>Overdamped ($\zeta \gt 1$):</b> Sistem kembali ke posisi awal secara lambat tanpa osilasi akibat redaman yang berlebihan.</li>
+            </ol>
+
+            <hr class="border-zinc-800 my-8">
+
+            <h3>5. Representasi Diagram Blok Kendali</h3>
+            <p>
+                Fungsi alih sistem dapat direpresentasikan ke dalam struktur Diagram Blok Kendali Loop Tertutup (<i>Closed-Loop Control Block Diagram</i>):
+            </p>
+
+            <div class="flex justify-center my-6">
+                <div class="w-full bg-black/50 rounded-xl border border-zinc-800 p-6 shadow-inner flex items-center justify-center">
+                    <svg viewBox="0 0 460 150" class="w-full max-w-[520px]">
+                        <path d="M 30 75 L 75 75" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-edu)"/>
+                        <circle cx="90" cy="75" r="15" fill="none" stroke="#38bdf8" stroke-width="2"/>
+                        <text x="82" y="65" fill="#38bdf8" font-size="16" font-weight="bold">+</text>
+                        <text x="95" y="105" fill="#fb7185" font-size="20" font-weight="bold">-</text>
+                        
+                        <path d="M 105 75 L 140 75" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-edu)"/>
+                        <rect x="140" y="48" width="90" height="54" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                        <text x="185" y="80" fill="#e2e8f0" font-size="15" text-anchor="middle" font-family="monospace">cs + k</text>
+                        
+                        <path d="M 230 75 L 270 75" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-edu)"/>
+                        <rect x="270" y="48" width="90" height="54" rx="6" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                        <text x="315" y="80" fill="#e2e8f0" font-size="15" text-anchor="middle" font-family="monospace">1 / ms²</text>
+                        
+                        <path d="M 360 75 L 430 75" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-edu)"/>
+                        
+                        <circle cx="395" cy="75" r="4" fill="#94a3b8"/>
+                        <path d="M 395 75 L 395 130 L 90 130 L 90 90" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#arrow-edu)"/>
+
+                        <text x="15" y="65" fill="#38bdf8" font-size="15" font-family="monospace">Y(s)</text>
+                        <text x="410" y="65" fill="#38bdf8" font-size="15" font-family="monospace">X(s)</text>
+                        <text x="245" y="65" fill="#94a3b8" font-size="13" font-family="monospace">F(s)</text>
+                    </svg>
+                </div>
+            </div>
+
+            <hr class="border-zinc-800 my-8">
+
+            <h3>6. Solusi Numerik Transien: Algoritma Runge-Kutta Orde 4 (RK4)</h3>
+            <p>
+                Simulator ini menyelesaikan Persamaan Diferensial Biasa secara <i>real-time</i> menggunakan metode numerik <b>Runge-Kutta Orde ke-4 (RK4)</b>. Persamaan orde-2 diubah menjadi dua buah Persamaan Diferensial Orde-1 berurutan dengan mendefinisikan status $(x, v)$:
+            </p>
+
+            $$ \begin{cases} 
+            \frac{dx}{dt} = v \\ 
+            \frac{dv}{dt} = \frac{-k(x - y) - c(v - \dot{y})}{m} 
+            \end{cases} $$
+
+            <p>
+                Melalui komputasi RK4, simpangan sasis $x(t+\Delta t)$ dan kecepatan $v(t+\Delta t)$ dihitung pada setiap langkah waktu $\Delta t \approx 0.016 \text{ s}$ dengan akurasi ilmiah yang tinggi.
+            </p>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto pt-6 pb-2 text-center text-zinc-500 text-xs md:text-sm border-t border-zinc-800/80">
+        <p>&copy;2026 ShakiDC - JTM UNIMAL</p>
+    </footer>
+
+    <script>
+        // --- KATEX RENDER FIX ---
+        // Mengkonfigurasi renderMathInElement agar memproses notasi matematika baik inline ($...$, \(...\)) maupun display ($$...$$, \[...\])
+        function initKaTeX() {
+            if (window.renderMathInElement) {
+                window.renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false,
+                    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+                });
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initKaTeX();
+        });
+
+        // --- 0. TAB NAVIGATION LOGIC ---
+        const btnSim = document.getElementById('btn-tab-sim');
+        const btnEdu = document.getElementById('btn-tab-edu');
+        const tabSim = document.getElementById('tab-simulator');
+        const tabEdu = document.getElementById('tab-education');
+
+        btnSim.addEventListener('click', () => {
+            tabSim.classList.remove('hidden');
+            tabEdu.classList.add('hidden');
+            
+            btnSim.className = "px-6 md:px-8 py-3 rounded-xl font-extrabold text-sm md:text-base bg-sky-600 text-white shadow-[0_0_15px_rgba(56,189,248,0.4)] transition-all flex items-center gap-2";
+            btnEdu.className = "px-6 md:px-8 py-3 rounded-xl font-extrabold text-sm md:text-base bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-all border border-zinc-700/60 flex items-center gap-2";
+            
+            window.dispatchEvent(new Event('resize'));
+        });
+
+        btnEdu.addEventListener('click', () => {
+            tabEdu.classList.remove('hidden');
+            tabSim.classList.add('hidden');
+            
+            btnEdu.className = "px-6 md:px-8 py-3 rounded-xl font-extrabold text-sm md:text-base bg-sky-600 text-white shadow-[0_0_15px_rgba(56,189,248,0.4)] transition-all flex items-center gap-2";
+            btnSim.className = "px-6 md:px-8 py-3 rounded-xl font-extrabold text-sm md:text-base bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-all border border-zinc-700/60 flex items-center gap-2";
+            
+            // Re-render KaTeX math when tab is opened to guarantee all inline math is formatted
+            initKaTeX();
+        });
+
+        // --- 1. PHYSICS ENGINE & STATE ---
+        const params = {
+            m: 150,    // Mass (kg)
+            k: 2000,   // Stiffness (N/m)
+            c: 2000,   // Damping (Ns/m)
+            v: 40      // Speed (km/h)
+        };
+
+        const state = {
+            x: 0,      // Chassis displacement (m)
+            v_x: 0,    // Chassis velocity (m/s)
+            t: 0       // Simulation time (s)
+        };
+
+        const dt = 0.016; 
+        let activeDisturbance = null;
+
+        function updateDerivedParams() {
+            const wn = Math.sqrt(params.k / params.m);
+            const zeta = params.c / (2 * Math.sqrt(params.k * params.m));
+            
+            document.getElementById('calc-wn').innerText = wn.toFixed(2);
+            document.getElementById('calc-zeta').innerText = zeta.toFixed(3);
+            
+            const statusEl = document.getElementById('calc-status');
+            if (zeta < 1.0) {
+                statusEl.innerText = "Underdamped";
+                statusEl.className = "text-amber-400 font-mono font-bold text-xs uppercase";
+            } else if (Math.abs(zeta - 1.0) < 0.02) {
+                statusEl.innerText = "Critically Damped";
+                statusEl.className = "text-emerald-400 font-mono font-bold text-xs uppercase";
+            } else {
+                statusEl.innerText = "Overdamped";
+                statusEl.className = "text-rose-400 font-mono font-bold text-xs uppercase";
+            }
+        }
+
+        const inputs = ['m', 'k', 'c', 'v'];
+        inputs.forEach(id => {
+            const el = document.getElementById(`input-${id}`);
+            const valEl = document.getElementById(`val-${id}`);
+            el.addEventListener('input', (e) => {
+                params[id] = parseFloat(e.target.value);
+                valEl.innerText = params[id];
+                updateDerivedParams();
+            });
+        });
+
+        updateDerivedParams();
+
+        const hudX = document.getElementById('hud-x');
+        const hudY = document.getElementById('hud-y');
+
+        function getRoadState(t) {
+            if (!activeDisturbance) return { y: 0, v_y: 0 };
+            
+            const speedMs = params.v / 3.6;
+            const duration = speedMs > 0.1 ? activeDisturbance.width / speedMs : 10; 
+            
+            const dt_dist = t - activeDisturbance.t0;
+            const H = activeDisturbance.height;   
+            
+            if (dt_dist >= 0 && dt_dist <= duration) {
+                const omega = Math.PI / duration;
+                return {
+                    y: H * Math.sin(omega * dt_dist),
+                    v_y: H * omega * Math.cos(omega * dt_dist)
+                };
+            } else if (dt_dist > duration) {
+                activeDisturbance = null;
+            }
+            return { y: 0, v_y: 0 };
+        }
+
+        function getDerivatives(x, v_x, t) {
+            const road = getRoadState(t);
+            const a = (-params.k * (x - road.y) - params.c * (v_x - road.v_y)) / params.m;
+            return { dx: v_x, dv: a };
+        }
+
+        function stepPhysics() {
+            const { x, v_x, t } = state;
+
+            const k1 = getDerivatives(x, v_x, t);
+            const k2 = getDerivatives(x + 0.5 * k1.dx * dt, v_x + 0.5 * k1.dv * dt, t + 0.5 * dt);
+            const k3 = getDerivatives(x + 0.5 * k2.dx * dt, v_x + 0.5 * k2.dv * dt, t + 0.5 * dt);
+            const k4 = getDerivatives(x + k3.dx * dt, v_x + k3.dv * dt, t + dt);
+
+            state.x += (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx) * (dt / 6);
+            state.v_x += (k1.dv + 2 * k2.dv + 2 * k3.dv + k4.dv) * (dt / 6);
+            state.t += dt;
+        }
+
+        // --- 2. CHART.JS GRAPH ---
+        const chartCtx = document.getElementById('responseChart').getContext('2d');
+        const MAX_POINTS = 300; 
+        
+        const chart = new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: Array(MAX_POINTS).fill(''),
+                datasets: [
+                    {
+                        label: 'Chassis Output x(t)',
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.1,
+                        fill: true,
+                        data: Array(MAX_POINTS).fill(0)
+                    },
+                    {
+                        label: 'Road Input y(t)',
+                        borderColor: '#71717a',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.1,
+                        data: Array(MAX_POINTS).fill(0)
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                    x: { display: false },
+                    y: {
+                        title: { display: true, text: 'Displacement (m)', color: '#a1a1aa' },
+                        ticks: { color: '#a1a1aa' },
+                        grid: { color: '#27272a' },
+                        min: -0.5,
+                        max: 0.5
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e4e4e7', usePointStyle: true, boxWidth: 8 } },
+                    tooltip: { enabled: false }
+                }
+            }
+        });
+
+        // --- 3. THREE.JS 3D SCENE ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x09090b, 0.04);
+
+        const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(0, 1.2, 4);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || 400);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.target.set(0, 0.6, 0);
+        controls.maxPolarAngle = Math.PI / 2 - 0.05; 
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6)); 
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(5, 10, 5);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+        
+        const blueLight = new THREE.PointLight(0x38bdf8, 2, 10);
+        blueLight.position.set(-2, 2, 2);
+        scene.add(blueLight);
+
+        const roadGroup = new THREE.Group();
+        scene.add(roadGroup);
+        const roadMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(50, 4, 30, 1), 
+            new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 1 })
+        );
+        roadMesh.rotation.x = -Math.PI / 2;
+        roadMesh.receiveShadow = true;
+        roadGroup.add(roadMesh);
+
+        const markersGroup = new THREE.Group();
+        roadGroup.add(markersGroup);
+        const markerGeo = new THREE.PlaneGeometry(0.5, 0.1);
+        const markerMat = new THREE.MeshBasicMaterial({ color: 0x52525b });
+        for(let i = -25; i < 25; i += 3) {
+            const marker = new THREE.Mesh(markerGeo, markerMat);
+            marker.rotation.x = -Math.PI / 2;
+            marker.position.set(i, 0.01, 0);
+            markersGroup.add(marker);
+        }
+
+        const obstacles = [];
+        const bumpGeo = new THREE.CylinderGeometry(0.08, 0.08, 4, 32);
+        const bumpMat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.8 }); 
+        const potholeGeo = new THREE.PlaneGeometry(0.8, 4);
+        const potholeMat = new THREE.MeshBasicMaterial({ color: 0x050505 }); 
+
+        function spawnObstacle(type) {
+            const mesh = type === 'bump' 
+                ? new THREE.Mesh(bumpGeo, bumpMat)
+                : new THREE.Mesh(potholeGeo, potholeMat);
+            
+            if (type === 'bump') {
+                mesh.rotation.x = Math.PI / 2;
+                mesh.position.set(20, 0, 0);
+            } else {
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.position.set(20, 0.01, 0); 
+            }
+            
+            scene.add(mesh);
+            obstacles.push({ type: type, mesh: mesh, x: 20, triggered: false });
+        }
+
+        document.getElementById('btn-bump').addEventListener('click', () => spawnObstacle('bump'));
+        document.getElementById('btn-pothole').addEventListener('click', () => spawnObstacle('pothole'));
+
+        const gltfLoader = new THREE.GLTFLoader();
+        let originalModelWrapper = new THREE.Group();
+        scene.add(originalModelWrapper);
+        
+        let fGroup = new THREE.Group();
+        let rGroup = new THREE.Group();
+        let wheelsReady = false;
+        let baseLift = 0.6;
+
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingError = document.getElementById('loading-error');
+
+        gltfLoader.load(
+            'motorcycle.glb',
+            function(gltf) {
+                const model = gltf.scene;
+                
+                model.scale.set(1.0, 1.0, 1.0);
+                model.rotation.y = -Math.PI / 2; 
+                
+                originalModelWrapper.add(model);
+                originalModelWrapper.add(fGroup);
+                originalModelWrapper.add(rGroup);
+
+                originalModelWrapper.updateMatrixWorld(true);
+
+                const fNames = ["Object_200","Object_202","Object_204","Object_208","Object_210","Object_212"];
+                const rNames = ["Object_220","Object_222","Object_224","Object_228","Object_230","Object_232"];
+                
+                const fParts = [];
+                const rParts = [];
+
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (fNames.includes(child.name)) {
+                            fParts.push(child);
+                        } else if (rNames.includes(child.name)) {
+                            rParts.push(child);
+                        }
+                    }
+                });
+
+                if (fParts.length === 0 && rParts.length === 0) {
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            const nameLower = child.name.toLowerCase();
+                            if (nameLower.includes('wheel') || nameLower.includes('tire') || nameLower.includes('rim') || nameLower.includes('front') || nameLower.includes('rear') || nameLower.includes('object')) {
+                                const box = new THREE.Box3().setFromObject(child);
+                                const center = box.getCenter(new THREE.Vector3());
+                                if (center.x > 0) fParts.push(child);
+                                else if (center.x < 0) rParts.push(child);
+                            }
+                        }
+                    });
+                }
+
+                function setupWheelPivot(group, parts) {
+                    if (!parts || parts.length === 0) return;
+                    parts.forEach(p => p.updateMatrixWorld(true));
+                    const box = new THREE.Box3();
+                    parts.forEach(p => box.expandByObject(p));
+                    const center = new THREE.Vector3();
+                    box.getCenter(center);
+                    group.position.copy(center);
+                    group.updateMatrixWorld(true);
+                    parts.forEach(p => {
+                        group.attach(p);
+                    });
+                }
+
+                setupWheelPivot(fGroup, fParts);
+                setupWheelPivot(rGroup, rParts);
+
+                originalModelWrapper.updateMatrixWorld(true);
+                const fullBox = new THREE.Box3().setFromObject(originalModelWrapper);
+                baseLift = -fullBox.min.y; 
+                originalModelWrapper.position.set(0, baseLift, 0);
+
+                fGroup.userData.initY = fGroup.position.y;
+                rGroup.userData.initY = rGroup.position.y;
+
+                wheelsReady = true;
+                loadingOverlay.classList.add('hidden');
+            },
+            undefined,
+            function(error) {
+                console.error("Gagal memuat file 3D:", error);
+                loadingOverlay.querySelector('.animate-spin').classList.add('hidden');
+                loadingError.innerHTML = "File <b>motorcycle.glb</b> tidak ditemukan.<br>Pastikan file 3D ditempatkan di direktori yang sama dengan index.html.";
+            }
+        );
+
+        function update3D() {
+            if (tabSim.classList.contains('hidden')) return;
+
+            const roadData = getRoadState(state.t);
+            const roadY = roadData.y;
+            const speedMs = params.v / 3.6;
+            
+            roadGroup.position.y = roadY;
+            markersGroup.children.forEach(marker => {
+                marker.position.x -= speedMs * dt; 
+                if(marker.position.x < -25) marker.position.x += 50; 
+            });
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= speedMs * dt;
+                obs.mesh.position.x = obs.x;
+                obs.mesh.position.y = roadY + (obs.type === 'pothole' ? 0.01 : 0);
+                
+                if (obs.x <= 0 && !obs.triggered) {
+                    obs.triggered = true;
+                    activeDisturbance = { 
+                        t0: state.t, 
+                        height: obs.type === 'bump' ? 0.08 : -0.08, 
+                        width: 1.0 
+                    };
+                }
+                
+                if (obs.x < -15) {
+                    scene.remove(obs.mesh);
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            if (originalModelWrapper && wheelsReady) {
+                originalModelWrapper.position.set(0, baseLift + state.x, 0);
+                const visualOmega = speedMs * 0.25; 
+                
+                fGroup.rotation.z -= visualOmega * dt;
+                rGroup.rotation.z -= visualOmega * dt;
+
+                const groundCorrection = -state.x + roadY;
+                fGroup.position.y = fGroup.userData.initY + groundCorrection;
+                rGroup.position.y = rGroup.userData.initY + groundCorrection;
+            }
+
+            hudX.innerText = state.x.toFixed(3);
+            hudY.innerText = roadY.toFixed(3);
+        }
+
+        function updateChart() {
+            if (tabSim.classList.contains('hidden')) return;
+
+            const roadData = getRoadState(state.t);
+            chart.data.datasets[0].data.push(state.x); 
+            chart.data.datasets[1].data.push(roadData.y);
+            
+            if (chart.data.datasets[0].data.length > MAX_POINTS) {
+                chart.data.datasets[0].data.shift();
+                chart.data.datasets[1].data.shift();
+            }
+            chart.update('none'); 
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            stepPhysics();
+            update3D();
+            updateChart();
+            
+            if (!tabSim.classList.contains('hidden')) {
+                controls.update();
+                renderer.render(scene, camera);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (!tabSim.classList.contains('hidden') && container.clientWidth > 0) {
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                chart.resize();
+            }
+        });
+
+        animate();
+    </script>
+</body>
+</html>
