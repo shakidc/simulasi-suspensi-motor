@@ -18,7 +18,7 @@
     <meta property="og:url" content="https://shakidc.github.io/simulasi-suspensi-motor/">
     <meta property="og:title" content="Digital Twin: Motorcycle Rear Suspension Dynamics">
     <meta property="og:description" content="Simulasi interaktif 3D dan laboratorium virtual untuk dinamika sistem suspensi sepeda motor dengan kalkulasi RK4 dan analisis matematika ilmiah.">
-    <meta property="og:image" content="logo.png">
+    <meta property="og:image" content="https://shakidc.github.io/simulasi-suspensi-motor/logo.png">
     <meta property="og:site_name" content="Digital Twin Suspension Lab">
     <meta property="og:locale" content="id_ID">
 
@@ -27,7 +27,7 @@
     <meta name="twitter:url" content="https://shakidc.github.io/simulasi-suspensi-motor/">
     <meta name="twitter:title" content="Digital Twin: Motorcycle Rear Suspension Dynamics">
     <meta name="twitter:description" content="Simulasi interaktif 3D dan laboratorium virtual untuk dinamika sistem suspensi sepeda motor berbasis RK4 Solver.">
-    <meta name="twitter:image" content="logo.png">
+    <meta name="twitter:image" content="https://shakidc.github.io/simulasi-suspensi-motor/logo.png">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -234,28 +234,28 @@
                                 <label class="text-zinc-400">Kecepatan <span class="text-zinc-500 normal-case">(V)</span></label>
                                 <span class="text-sky-400 font-mono"><span id="val-v" class="text-sm font-bold">40</span> km/h</span>
                             </div>
-                            <input type="range" id="input-v" min="10" max="150" step="5" value="40">
+                            <input type="range" id="input-v" min="10" max="200" step="5" value="40">
                         </div>
                         <div>
                             <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
                                 <label class="text-zinc-400">Massa Sasis <span class="text-zinc-500 normal-case">(m)</span></label>
                                 <span class="text-white font-mono"><span id="val-m" class="text-sm font-bold">150</span> kg</span>
                             </div>
-                            <input type="range" id="input-m" min="80" max="300" step="10" value="150">
+                            <input type="range" id="input-m" min="80" max="500" step="10" value="150">
                         </div>
                         <div>
                             <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
                                 <label class="text-zinc-400">Kekakuan Pegas <span class="text-zinc-500 normal-case">(k)</span></label>
                                 <span class="text-emerald-400 font-mono"><span id="val-k" class="text-sm font-bold">2000</span> N/m</span>
                             </div>
-                            <input type="range" id="input-k" min="1000" max="10000" step="100" value="2000">
+                            <input type="range" id="input-k" min="1000" max="50000" step="100" value="2000">
                         </div>
                         <div>
                             <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-1">
                                 <label class="text-zinc-400">Peredaman <span class="text-zinc-500 normal-case">(c)</span></label>
                                 <span class="text-rose-400 font-mono"><span id="val-c" class="text-sm font-bold">2000</span> Ns/m</span>
                             </div>
-                            <input type="range" id="input-c" min="100" max="10000" step="100" value="2000">
+                            <input type="range" id="input-c" min="100" max="50000" step="100" value="2000">
                         </div>
                     </div>
                 </div>
